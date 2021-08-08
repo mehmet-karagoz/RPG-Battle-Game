@@ -9,6 +9,13 @@ fps = 60
 screen_width = 800
 screen_height = 400
 
+#fonts
+font = pygame.font.SysFont("Times New Roman", 26)
+
+#colors
+red = (255, 0, 0)
+green = (0, 255, 0)
+
 screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption("RPG Battle")
 
@@ -17,6 +24,12 @@ pygame.display.set_caption("RPG Battle")
 background_img = pygame.image.load("img/Background/background.png").convert_alpha()
 
 # functions
+
+#draw text
+def draw(text, font, text_color, x ,y):
+    img = font.render(text, True, text_color)
+    screen.blit(img,( x, y))
+
 #draw background
 def draw_background():
     screen.blit(background_img, (0,0))
@@ -65,8 +78,31 @@ class Fighter():
     def draw(self):
         screen.blit(self.image, self.rect)
 
+
+class HealthBar():
+    def __init__(self, x, y, hp, max_hp):
+        self.x = x
+        self.y = y
+        self.hp = hp
+        self.max_hp = max_hp
+        img = pygame.image.load("img/Icons/health_bar.png")
+        self.image = pygame.transform.scale(img, (img.get_width() * 4, img.get_height() * 2))
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+
+    def draw(self, hp):
+        self.hp = hp
+        ratio = self.hp / self.max_hp
+        screen.blit(self.image, self.rect)
+        pygame.draw.rect(screen, red, (self.x - 126, self.y - 5, 258 * ratio, 11))
+
+
+
 priestess = Fighter(220, 130, "Priestess", 80, 30, 3)
 bandit = Fighter(540, 230, "Bandit", 80, 25, 2)
+
+priestess_health_bar = HealthBar(200, 30, priestess.hp, priestess.max_hp)
+bandit_health_bar = HealthBar(600, 30, bandit.hp, bandit.max_hp)
 
 run = True
 
@@ -80,6 +116,10 @@ while run:
     priestess.draw()
     bandit.update()
     bandit.draw()
+
+    #fighter stats
+    priestess_health_bar.draw(priestess.hp)
+    bandit_health_bar.draw(bandit.hp)
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
