@@ -1,4 +1,5 @@
 import pygame
+import random
 
 pygame.init()
 
@@ -8,6 +9,15 @@ fps = 60
 #game window
 screen_width = 800
 screen_height = 400
+
+#game variables
+current_fighter = 1
+total_fighter = 2
+action_cooldown = 0
+action_wait_time = 90
+attack = False
+potion = False
+clicked = False
 
 #fonts
 font = pygame.font.SysFont("Times New Roman", 26)
@@ -22,6 +32,8 @@ pygame.display.set_caption("RPG Battle")
 #load images
 #background image
 background_img = pygame.image.load("img/Background/background.png").convert_alpha()
+
+sword_img = pygame.image.load("img/Icons/sword.png").convert_alpha()
 
 # functions
 
@@ -73,7 +85,23 @@ class Fighter():
             self.update_time = pygame.time.get_ticks()
             self.frame_index += 1
         if self.frame_index >= len(self.animation_list[self.action]):
-            self.frame_index = 0
+            self.idle()
+
+    def idle(self):
+        self.action = 0
+        self.frame_index = 0
+        self.update_time = pygame.time.get_ticks()
+
+    def attack(self, target):
+        rand = random.randint(-5, 5)
+        damage = self.strength + rand
+        target.hp -= damage
+        if target.hp <= 0:
+            target.alive = False
+        #animate
+        self.action = 1
+        self.frame_index = 0
+        self.update_time = pygame.time.get_ticks()
 
     def draw(self):
         screen.blit(self.image, self.rect)
@@ -121,9 +149,50 @@ while run:
     priestess_health_bar.draw(priestess.hp)
     bandit_health_bar.draw(bandit.hp)
 
+    #control actions
+    attack = False
+    potion = False
+    position = pygame.mouse.get_pos()
+    pygame.mouse.set_visible(True)
+    if bandit.rect.collidepoint(position):
+        pygame.mouse.set_visible(False)
+
+        screen.blit(sword_img, position)
+
+        if clicked:
+            attack = True
+
+    #attack 
+    if priestess.alive:
+        if current_fighter == 1:
+            action_cooldown += 1
+            if action_cooldown >= action_wait_time:
+                if attack:
+                    priestess.attack(bandit)
+                    current_fighter += 1
+                    action_cooldown = 0
+
+    if bandit.alive:
+        if current_fighter == 2:
+            action_cooldown += 1
+            if action_cooldown >= action_wait_time:
+                bandit.attack(priestess)
+                current_fighter += 1
+                action_cooldown = 0
+    else:
+        current_fighter += 1
+
+    if current_fighter > total_fighter:
+        current_fighter = 1
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
+        
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            clicked = True
+        else:
+            clicked = False
 
     pygame.display.update()
 
