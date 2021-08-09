@@ -1,6 +1,7 @@
 import pygame
 import random
 import button
+from pygame import mixer
 
 pygame.init()
 
@@ -21,6 +22,8 @@ potion = False
 potion_effect = 30
 clicked = False
 game_over = 0
+victory_sound = 0
+defeat_sound = 0
 
 #fonts
 font = pygame.font.SysFont("Times New Roman", 26)
@@ -35,6 +38,10 @@ pygame.display.set_caption("RPG Battle")
 
 icon = pygame.image.load("img/Icons/rpg-game.png").convert_alpha()
 pygame.display.set_icon(icon)
+
+#sound effect
+mixer.music.load("sounds/Battle.mp3")
+mixer.music.play(-1)
 
 #load images
 #background image
@@ -157,9 +164,11 @@ class Fighter():
             damage = self.strength + rand
             target.hp -= damage
             target.hurt()
+            mixer.Sound("sounds/bandit_hurt.mp3").play()
             if target.hp <= 0:
                 target.alive = False
                 target.death()
+                mixer.Sound("sounds/bandit_death.mp3").play()
             #animate
             damage_text = Damage_Text(target.rect.centerx, target.rect.centery,str(damage), red)
             damage_text_group.add(damage_text)
@@ -292,6 +301,7 @@ while run:
                 if action_cooldown >= action_wait_time:
                     if attack:
                         priestess.attack(bandit)
+                        mixer.Sound("sounds/priestess_attack.mp3").play()
                         current_fighter += 1
                         action_cooldown = 0
                     if potion:
@@ -315,6 +325,7 @@ while run:
                 action_cooldown += 1
                 if action_cooldown >= action_wait_time:
                     bandit.attack(priestess)
+                    mixer.Sound("sounds/bandit_attack.wav").play()
                     current_fighter += 1
                     action_cooldown = 0
         else:
@@ -327,14 +338,23 @@ while run:
     if game_over != 0:
         if game_over == 1:
             screen.blit(victory_img, (125, 50))
+            victory_sound += 1
+            if victory_sound == 1:
+                mixer.Sound("sounds/victory.wav").play()
         else:
             screen.blit(defeat_img, (186, 40))
+            defeat_sound += 1
+            if defeat_sound == 1:
+                mixer.Sound("sounds/defeat.mp3").play()
         if restart_button.draw():
             priestess.reset()
             bandit.reset()
             current_fighter = 1
             action_cooldown = 0
             game_over = 0
+            victory_sound = 0
+            defeat_sound = 0
+    
 
     priestess.rect.centerx += priestess_x_change
 
