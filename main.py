@@ -64,8 +64,12 @@ class Fighter():
         self.action = 0
         self.update_time = pygame.time.get_ticks()
         #Idle
+        if self.name == "Priestess":
+            range_num = 8
+        else:
+            range_num = 4
         temp_list = []
-        for i in range(4):
+        for i in range(range_num):
             img = pygame.image.load(f"img/{self.name}/Idle/{i}.png")
             img = pygame.transform.scale(img, (img.get_width() * 3, img.get_height() * 3))
             temp_list.append(img)
@@ -74,6 +78,28 @@ class Fighter():
         temp_list = []
         for i in range(7):
             img = pygame.image.load(f"img/{self.name}/Attack/{i}.png")
+            img = pygame.transform.scale(img, (img.get_width() * 3, img.get_height() * 3))
+            temp_list.append(img)
+        self.animation_list.append(temp_list)
+        #Hurt
+        temp_list = []
+        if self.name == "Priestess":
+            range_num = 7
+        else:
+            range_num = 2
+        for i in range(range_num):
+            img = pygame.image.load(f"img/{self.name}/Hurt/{i}.png")
+            img = pygame.transform.scale(img, (img.get_width() * 3, img.get_height() * 3))
+            temp_list.append(img)
+        self.animation_list.append(temp_list)
+        #Death
+        temp_list = []
+        if self.name == "Priestess":
+            range_num = 16
+        else:
+            range_num = 8
+        for i in range(range_num):
+            img = pygame.image.load(f"img/{self.name}/Death/{i}.png")
             img = pygame.transform.scale(img, (img.get_width() * 3, img.get_height() * 3))
             temp_list.append(img)
         self.animation_list.append(temp_list)
@@ -88,7 +114,10 @@ class Fighter():
             self.update_time = pygame.time.get_ticks()
             self.frame_index += 1
         if self.frame_index >= len(self.animation_list[self.action]):
-            self.idle()
+            if self.action == 3:
+                self.frame_index = len(self.animation_list[self.action])-1
+            else:
+                self.idle()
 
     def idle(self):
         self.action = 0
@@ -99,12 +128,24 @@ class Fighter():
         rand = random.randint(-5, 5)
         damage = self.strength + rand
         target.hp -= damage
+        target.hurt()
         if target.hp <= 0:
             target.alive = False
+            target.death()
         #animate
         damage_text = Damage_Text(target.rect.centerx, target.rect.centery,str(damage), red)
         damage_text_group.add(damage_text)
         self.action = 1
+        self.frame_index = 0
+        self.update_time = pygame.time.get_ticks()
+
+    def hurt(self):
+        self.action = 2
+        self.frame_index = 0
+        self.update_time = pygame.time.get_ticks()
+
+    def death(self):
+        self.action = 3
         self.frame_index = 0
         self.update_time = pygame.time.get_ticks()
 
@@ -183,7 +224,7 @@ while run:
 
         screen.blit(sword_img, position)
 
-        if clicked:
+        if clicked and bandit.alive:
             attack = True
     
     if potion_button.draw():
