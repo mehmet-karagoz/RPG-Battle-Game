@@ -57,6 +57,8 @@ def draw_background():
 #classes
 class Fighter():
     def __init__(self, x, y, name , max_hp, strength, potions):
+        self.x = x
+        self.y = y
         self.name = name
         self.max_hp = max_hp
         self.hp = max_hp
@@ -108,6 +110,20 @@ class Fighter():
             img = pygame.transform.scale(img, (img.get_width() * 3, img.get_height() * 3))
             temp_list.append(img)
         self.animation_list.append(temp_list)
+        #Heal
+        temp_list = []
+        for i in range(12):
+            img = pygame.image.load(f"img/Priestess/Heal/{i}.png")
+            img = pygame.transform.scale(img, (img.get_width() * 3, img.get_height() * 3))
+            temp_list.append(img)
+        self.animation_list.append(temp_list)
+        #Walk
+        temp_list = []
+        for i in range(8):
+            img = pygame.image.load(f"img/Priestess/Walk/{i}.png")
+            img = pygame.transform.scale(img, (img.get_width() * 3, img.get_height() * 3))
+            temp_list.append(img)
+        self.animation_list.append(temp_list)
         self.image = self.animation_list[self.action][self.frame_index]
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
@@ -130,16 +146,20 @@ class Fighter():
         self.update_time = pygame.time.get_ticks()
 
     def attack(self, target):
-        rand = random.randint(-5, 5)
-        damage = self.strength + rand
-        target.hp -= damage
-        target.hurt()
-        if target.hp <= 0:
-            target.alive = False
-            target.death()
-        #animate
-        damage_text = Damage_Text(target.rect.centerx, target.rect.centery,str(damage), red)
-        damage_text_group.add(damage_text)
+        distance = abs(self.rect.centerx - target.rect.centerx)
+        if target.name == "Priestess":
+            distance += 45
+        if distance <= 179:
+            rand = random.randint(-5, 5)
+            damage = self.strength + rand
+            target.hp -= damage
+            target.hurt()
+            if target.hp <= 0:
+                target.alive = False
+                target.death()
+            #animate
+            damage_text = Damage_Text(target.rect.centerx, target.rect.centery,str(damage), red)
+            damage_text_group.add(damage_text)
         self.action = 1
         self.frame_index = 0
         self.update_time = pygame.time.get_ticks()
@@ -148,6 +168,17 @@ class Fighter():
         self.action = 2
         self.frame_index = 0
         self.update_time = pygame.time.get_ticks()
+
+    def heal(self):
+        self.action = 4
+        self.frame_index = 0
+        self.update_time = pygame.time.get_ticks()
+
+    def walk(self):
+        self.action = 5
+        self.frame_index = 0
+        self.update_time = pygame.time.get_ticks()
+
 
     def death(self):
         self.action = 3
@@ -161,6 +192,9 @@ class Fighter():
         self.action = 0
         self.hp = self.max_hp
         self.update_time = pygame.time.get_ticks()
+        self.rect.centerx = self.x
+        self.rect.centery = self.y
+
 
     def draw(self):
         screen.blit(self.image, self.rect)
@@ -209,6 +243,8 @@ potion_button = button.Button(screen, 30, 300, potion_img, 32,32)
 restart_button = button.Button(screen, 280, 300, restart_img, 220,60)
 
 run = True
+
+priestess_x_change = 0
 
 while run:
 
@@ -262,6 +298,7 @@ while run:
                             else:
                                 heal_amount = priestess.max_hp - priestess.hp
                             priestess.hp += heal_amount
+                            priestess.heal()
                             heal_text = Damage_Text(priestess.rect.centerx, priestess.rect.centery,str(heal_amount), green)
                             damage_text_group.add(heal_text)
                             priestess.potions -= 1
@@ -296,9 +333,21 @@ while run:
             action_cooldown = 0
             game_over = 0
 
+    priestess.rect.centerx += priestess_x_change
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
+        
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_LEFT:
+                priestess_x_change = -3
+                priestess.walk()
+            if event.key == pygame.K_RIGHT:
+                priestess_x_change = 3
+                priestess.walk()
+        else:
+            priestess_x_change = 0
         
         if event.type == pygame.MOUSEBUTTONDOWN:
             clicked = True
@@ -306,5 +355,5 @@ while run:
             clicked = False
 
     pygame.display.update()
-
+    
 pygame.quit()
