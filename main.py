@@ -33,6 +33,9 @@ green = (0, 255, 0)
 screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption("RPG Battle")
 
+icon = pygame.image.load("img/Icons/rpg-game.png").convert_alpha()
+pygame.display.set_icon(icon)
+
 #load images
 #background image
 background_img = pygame.image.load("img/Background/background.png").convert_alpha()
@@ -335,6 +338,11 @@ while run:
 
     priestess.rect.centerx += priestess_x_change
 
+    if priestess.rect.centerx <= 85:
+        priestess.rect.centerx = 85
+    elif priestess.rect.centerx >= 478:
+        priestess.rect.centerx = 478
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
@@ -342,7 +350,7 @@ while run:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT:
                 priestess_x_change = -3
-                priestess.walk()
+                priestess.walk()              
             if event.key == pygame.K_RIGHT:
                 priestess_x_change = 3
                 priestess.walk()
@@ -355,5 +363,5 @@ while run:
             clicked = False
 
     pygame.display.update()
-    
+
 pygame.quit()
