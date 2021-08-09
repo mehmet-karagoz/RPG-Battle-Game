@@ -20,6 +20,7 @@ attack = False
 potion = False
 potion_effect = 30
 clicked = False
+game_over = 0
 
 #fonts
 font = pygame.font.SysFont("Times New Roman", 26)
@@ -37,6 +38,10 @@ pygame.display.set_caption("RPG Battle")
 background_img = pygame.image.load("img/Background/background.png").convert_alpha()
 potion_img = pygame.image.load("img/Potions/h0.png").convert_alpha()
 sword_img = pygame.image.load("img/Icons/sword.png").convert_alpha()
+victory_img = pygame.image.load("img/Icons/victory.png").convert_alpha()
+defeat_img = pygame.image.load("img/Icons/defeat.png").convert_alpha()
+restart_img = pygame.image.load("img/Icons/restart.png").convert_alpha()
+
 
 # functions
 
@@ -149,6 +154,14 @@ class Fighter():
         self.frame_index = 0
         self.update_time = pygame.time.get_ticks()
 
+    def reset(self):
+        self.alive = True
+        self.potions = self.start_potions
+        self.frame_index = 0
+        self.action = 0
+        self.hp = self.max_hp
+        self.update_time = pygame.time.get_ticks()
+
     def draw(self):
         screen.blit(self.image, self.rect)
 
@@ -193,6 +206,7 @@ priestess_health_bar = HealthBar(200, 30, priestess.hp, priestess.max_hp)
 bandit_health_bar = HealthBar(600, 30, bandit.hp, bandit.max_hp)
 
 potion_button = button.Button(screen, 30, 300, potion_img, 32,32)
+restart_button = button.Button(screen, 280, 300, restart_img, 220,60)
 
 run = True
 
@@ -231,40 +245,56 @@ while run:
         potion = True
     draw(str(priestess.potions), font_potion, green, 63, 313)
 
-    #attack 
-    if priestess.alive:
-        if current_fighter == 1:
-            action_cooldown += 1
-            if action_cooldown >= action_wait_time:
-                if attack:
-                    priestess.attack(bandit)
-                    current_fighter += 1
-                    action_cooldown = 0
-                if potion:
-                    if priestess.potions > 0:
-                        if priestess.max_hp - priestess.hp > potion_effect:
-                            heal_amount = potion_effect
-                        else:
-                            heal_amount = priestess.max_hp - priestess.hp
-                        priestess.hp += heal_amount
-                        heal_text = Damage_Text(priestess.rect.centerx, priestess.rect.centery,str(heal_amount), green)
-                        damage_text_group.add(heal_text)
-                        priestess.potions -= 1
+    if game_over == 0:
+        #attack 
+        if priestess.alive:
+            if current_fighter == 1:
+                action_cooldown += 1
+                if action_cooldown >= action_wait_time:
+                    if attack:
+                        priestess.attack(bandit)
                         current_fighter += 1
                         action_cooldown = 0
+                    if potion:
+                        if priestess.potions > 0:
+                            if priestess.max_hp - priestess.hp > potion_effect:
+                                heal_amount = potion_effect
+                            else:
+                                heal_amount = priestess.max_hp - priestess.hp
+                            priestess.hp += heal_amount
+                            heal_text = Damage_Text(priestess.rect.centerx, priestess.rect.centery,str(heal_amount), green)
+                            damage_text_group.add(heal_text)
+                            priestess.potions -= 1
+                            current_fighter += 1
+                            action_cooldown = 0
+        else:
+            game_over = -1
 
-    if bandit.alive:
-        if current_fighter == 2:
-            action_cooldown += 1
-            if action_cooldown >= action_wait_time:
-                bandit.attack(priestess)
-                current_fighter += 1
-                action_cooldown = 0
-    else:
-        current_fighter += 1
+        if bandit.alive:
+            if current_fighter == 2:
+                action_cooldown += 1
+                if action_cooldown >= action_wait_time:
+                    bandit.attack(priestess)
+                    current_fighter += 1
+                    action_cooldown = 0
+        else:
+            current_fighter += 1
+            game_over = 1
 
-    if current_fighter > total_fighter:
-        current_fighter = 1
+        if current_fighter > total_fighter:
+            current_fighter = 1
+    
+    if game_over != 0:
+        if game_over == 1:
+            screen.blit(victory_img, (125, 50))
+        else:
+            screen.blit(defeat_img, (186, 40))
+        if restart_button.draw():
+            priestess.reset()
+            bandit.reset()
+            current_fighter = 1
+            action_cooldown = 0
+            game_over = 0
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
