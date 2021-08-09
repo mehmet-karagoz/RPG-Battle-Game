@@ -1,5 +1,6 @@
 import pygame
 import random
+import button
 
 pygame.init()
 
@@ -17,10 +18,12 @@ action_cooldown = 0
 action_wait_time = 90
 attack = False
 potion = False
+potion_effect = 30
 clicked = False
 
 #fonts
 font = pygame.font.SysFont("Times New Roman", 26)
+font_potion = pygame.font.SysFont("Times New Roman", 15)
 
 #colors
 red = (255, 0, 0)
@@ -32,7 +35,7 @@ pygame.display.set_caption("RPG Battle")
 #load images
 #background image
 background_img = pygame.image.load("img/Background/background.png").convert_alpha()
-
+potion_img = pygame.image.load("img/Potions/h0.png").convert_alpha()
 sword_img = pygame.image.load("img/Icons/sword.png").convert_alpha()
 
 # functions
@@ -99,6 +102,8 @@ class Fighter():
         if target.hp <= 0:
             target.alive = False
         #animate
+        damage_text = Damage_Text(target.rect.centerx, target.rect.centery,str(damage), red)
+        damage_text_group.add(damage_text)
         self.action = 1
         self.frame_index = 0
         self.update_time = pygame.time.get_ticks()
@@ -124,13 +129,29 @@ class HealthBar():
         screen.blit(self.image, self.rect)
         pygame.draw.rect(screen, red, (self.x - 126, self.y - 5, 258 * ratio, 11))
 
+class Damage_Text(pygame.sprite.Sprite):
+    def __init__(self, x , y, damage , color):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = font.render(damage, True, color)
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+        self.counter = 0
 
+    def update(self):
+        self.rect.y -= 1
+        self.counter += 1
+        if self.counter > 30:
+            self.kill()
+
+damage_text_group = pygame.sprite.Group()
 
 priestess = Fighter(220, 130, "Priestess", 80, 30, 3)
 bandit = Fighter(540, 230, "Bandit", 80, 25, 2)
 
 priestess_health_bar = HealthBar(200, 30, priestess.hp, priestess.max_hp)
 bandit_health_bar = HealthBar(600, 30, bandit.hp, bandit.max_hp)
+
+potion_button = button.Button(screen, 30, 300, potion_img, 32,32)
 
 run = True
 
@@ -144,6 +165,9 @@ while run:
     priestess.draw()
     bandit.update()
     bandit.draw()
+
+    damage_text_group.update()
+    damage_text_group.draw(screen)
 
     #fighter stats
     priestess_health_bar.draw(priestess.hp)
@@ -161,6 +185,10 @@ while run:
 
         if clicked:
             attack = True
+    
+    if potion_button.draw():
+        potion = True
+    draw(str(priestess.potions), font_potion, green, 63, 313)
 
     #attack 
     if priestess.alive:
@@ -171,6 +199,18 @@ while run:
                     priestess.attack(bandit)
                     current_fighter += 1
                     action_cooldown = 0
+                if potion:
+                    if priestess.potions > 0:
+                        if priestess.max_hp - priestess.hp > potion_effect:
+                            heal_amount = potion_effect
+                        else:
+                            heal_amount = priestess.max_hp - priestess.hp
+                        priestess.hp += heal_amount
+                        heal_text = Damage_Text(priestess.rect.centerx, priestess.rect.centery,str(heal_amount), green)
+                        damage_text_group.add(heal_text)
+                        priestess.potions -= 1
+                        current_fighter += 1
+                        action_cooldown = 0
 
     if bandit.alive:
         if current_fighter == 2:
